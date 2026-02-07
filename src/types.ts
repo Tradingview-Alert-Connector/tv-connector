@@ -39,3 +39,12 @@ export type perpOrderParams = {
 	isAmountInputBase: boolean;
 	referralCode: string;
 };
+
+export type hyperliquidOrderParams = {
+	coin: string;
+	isBuy: boolean;
+	size: string;
+	price: string;
+	reduceOnly: boolean;
+	assetIndex: number;
+};

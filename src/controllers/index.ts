@@ -9,7 +9,11 @@ import {
 	perpCreateOrder,
 	perpBuildOrderParams,
 	perpGetAccount,
-	perpExportOrder
+	perpExportOrder,
+	hyperliquidCreateOrder,
+	hyperliquidBuildOrderParams,
+	hyperliquidGetAccount,
+	hyperliquidExportOrder
 } from '../services';
 
 const router: Router = express.Router();
@@ -19,15 +23,18 @@ router.get('/', async (req, res) => {
 
 	const dydxAccount = await dydxGetAccount();
 	const perpAccount = await perpGetAccount();
+	const hyperliquidAccount = await hyperliquidGetAccount();
 
-	if (!dydxAccount && !perpAccount) {
+	if (!dydxAccount && !perpAccount && !hyperliquidAccount) {
 		res.send('Error on getting account data');
 	} else {
 		const message =
 			'dYdX Account Ready: ' +
 			dydxAccount +
 			'\n  Perpetual Protocol Account Ready: ' +
-			perpAccount;
+			perpAccount +
+			'\n  Hyperliquid Account Ready: ' +
+			hyperliquidAccount;
 		res.send(message);
 	}
 });
@@ -53,6 +60,20 @@ router.post('/', async (req, res) => {
 				orderResult,
 				req.body['price'],
 				req.body['market']
+			);
+			break;
+		}
+		case 'hyperliquid': {
+			const orderParams = await hyperliquidBuildOrderParams(req.body);
+			if (!orderParams) return;
+			orderResult = await hyperliquidCreateOrder(orderParams);
+			if (!orderResult) return;
+			await hyperliquidExportOrder(
+				req.body['strategy'],
+				orderResult,
+				req.body['price'],
+				req.body['market'],
+				req.body['order']
 			);
 			break;
 		}
