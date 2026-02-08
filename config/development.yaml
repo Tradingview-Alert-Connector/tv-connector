@@ -14,3 +14,4 @@ Hyperliquid:
     host: https://api.hyperliquid-testnet.xyz
   User:
     slippage: 0.05
+    builderFee: 10

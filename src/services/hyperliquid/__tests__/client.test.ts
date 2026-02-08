@@ -125,6 +125,78 @@ describe('HyperliquidConnector', () => {
 			expect(capturedAction.orders[0].b).toBe(false);
 			expect(capturedAction.orders[0].a).toBe(1);
 		});
+
+		it('includes builder fee in action when provided', async () => {
+			process.env.HYPERLIQUID_PRIVATE_KEY = TEST_PRIVATE_KEY;
+			const connector = HyperliquidConnector.build();
+
+			let capturedAction: any;
+			(connector as any).exchange = jest
+				.fn()
+				.mockImplementation((action: any) => {
+					capturedAction = action;
+					return Promise.resolve({ status: 'ok' });
+				});
+
+			const builder = {
+				b: '0x1234567890abcdef1234567890abcdef12345678',
+				f: 10
+			};
+			await connector.placeOrder(0, true, '50000', '0.01', false, builder);
+
+			expect(capturedAction.builder).toEqual(builder);
+		});
+
+		it('does not include builder field when not provided', async () => {
+			process.env.HYPERLIQUID_PRIVATE_KEY = TEST_PRIVATE_KEY;
+			const connector = HyperliquidConnector.build();
+
+			let capturedAction: any;
+			(connector as any).exchange = jest
+				.fn()
+				.mockImplementation((action: any) => {
+					capturedAction = action;
+					return Promise.resolve({ status: 'ok' });
+				});
+
+			await connector.placeOrder(0, true, '50000', '0.01', false);
+
+			expect(capturedAction.builder).toBeUndefined();
+		});
+	});
+
+	describe('setReferrer()', () => {
+		it('sends setReferrer action to exchange', async () => {
+			process.env.HYPERLIQUID_PRIVATE_KEY = TEST_PRIVATE_KEY;
+			const connector = HyperliquidConnector.build();
+
+			let capturedAction: any;
+			(connector as any).exchange = jest
+				.fn()
+				.mockImplementation((action: any) => {
+					capturedAction = action;
+					return Promise.resolve({ status: 'ok' });
+				});
+
+			await connector.setReferrer('TESTCODE');
+
+			expect(capturedAction).toEqual({
+				type: 'setReferrer',
+				code: 'TESTCODE'
+			});
+		});
+
+		it('handles error gracefully when referrer already set', async () => {
+			process.env.HYPERLIQUID_PRIVATE_KEY = TEST_PRIVATE_KEY;
+			const connector = HyperliquidConnector.build();
+
+			(connector as any).exchange = jest
+				.fn()
+				.mockRejectedValue(new Error('Referrer already set'));
+
+			// Should not throw
+			await connector.setReferrer('TESTCODE');
+		});
 	});
 
 	describe('isMainnet detection', () => {

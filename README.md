@@ -65,7 +65,13 @@ PERPETUAL_PRIVATE_KEY=
 For Hyperliquid:
 ```
 HYPERLIQUID_PRIVATE_KEY=
+# Optional: referral code for 4% fee discount (applied once on first order)
+HYPERLIQUID_REFERRAL_CODE=
+# Optional: builder address to charge builder fee per order
+HYPERLIQUID_BUILDER_ADDRESS=
 ```
+
+The builder fee amount (in tenths of basis points) is configured in `config/production.yaml` under `Hyperliquid.User.builderFee` (default: 10 = 1 bps).
 
 Optional:
 ```

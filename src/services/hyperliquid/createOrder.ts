@@ -1,6 +1,10 @@
 import { hyperliquidOrderParams } from '../../types';
 import { _sleep } from '../../helper';
 import HyperliquidConnector from './client';
+import config = require('config');
+import 'dotenv/config';
+
+let referrerAttempted = false;
 
 export const hyperliquidCreateOrder = async (
 	orderParams: hyperliquidOrderParams
@@ -12,12 +16,32 @@ export const hyperliquidCreateOrder = async (
 			const connector = HyperliquidConnector.build();
 			if (!connector) return;
 
+			// Attempt to set referrer on first order
+			if (!referrerAttempted) {
+				referrerAttempted = true;
+				const referralCode = process.env.HYPERLIQUID_REFERRAL_CODE;
+				if (referralCode) {
+					await connector.setReferrer(referralCode);
+				}
+			}
+
+			// Build optional builder fee
+			let builder: { b: string; f: number } | undefined;
+			const builderAddress = process.env.HYPERLIQUID_BUILDER_ADDRESS;
+			if (builderAddress) {
+				const builderFee: number = config.get(
+					'Hyperliquid.User.builderFee'
+				);
+				builder = { b: builderAddress, f: builderFee };
+			}
+
 			const result = await connector.placeOrder(
 				orderParams.assetIndex,
 				orderParams.isBuy,
 				orderParams.price,
 				orderParams.size,
-				orderParams.reduceOnly
+				orderParams.reduceOnly,
+				builder
 			);
 
 			if (result.status === 'err') {

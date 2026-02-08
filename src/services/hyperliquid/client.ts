@@ -55,6 +55,7 @@ class HyperliquidConnector {
 	private wallet: ethers.Wallet;
 	private baseUrl: string;
 	private isMainnet: boolean;
+	private static referrerSet = false;
 
 	constructor(wallet: ethers.Wallet, baseUrl: string, isMainnet: boolean) {
 		this.wallet = wallet;
@@ -179,12 +180,32 @@ class HyperliquidConnector {
 		return httpPost(this.baseUrl + '/exchange', payload);
 	}
 
+	async setReferrer(code: string): Promise<any> {
+		if (HyperliquidConnector.referrerSet) return;
+
+		try {
+			const action = {
+				type: 'setReferrer',
+				code
+			};
+			const result = await this.exchange(action);
+			HyperliquidConnector.referrerSet = true;
+			console.log('Hyperliquid referrer set to:', code);
+			return result;
+		} catch (error) {
+			// Referrer may already be set; ignore and mark as done
+			HyperliquidConnector.referrerSet = true;
+			console.log('Hyperliquid referrer already set or failed:', error);
+		}
+	}
+
 	async placeOrder(
 		assetIndex: number,
 		isBuy: boolean,
 		limitPx: string,
 		sz: string,
-		reduceOnly: boolean = false
+		reduceOnly: boolean = false,
+		builder?: { b: string; f: number }
 	): Promise<any> {
 		const order: any = {
 			a: assetIndex,
@@ -195,11 +216,15 @@ class HyperliquidConnector {
 			t: { limit: { tif: 'Ioc' } }
 		};
 
-		const action = {
+		const action: any = {
 			type: 'order',
 			orders: [order],
 			grouping: 'na'
 		};
+
+		if (builder) {
+			action.builder = builder;
+		}
 
 		return this.exchange(action);
 	}
